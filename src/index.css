@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply font-inter;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sora font-bold;
+  }
+  
+  p, span, div {
+    @apply font-inter font-normal;
+  }
+}
+
+@layer components {
+  .word-button {
+    @apply px-4 py-2 rounded-full border border-gray-200 transition-all duration-200 text-text-primary hover:bg-primary hover:text-white hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+  }
+  
+  .word-button-selected {
+    @apply bg-primary text-white border-primary;
+  }
+  
+  .nav-button {
+    @apply px-8 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-200 font-medium text-base;
+  }
+  
+  .primary-button {
+    @apply nav-button bg-primary text-white hover:bg-primary-dark focus:ring-primary;
+  }
+  
+  .secondary-button {
+    @apply nav-button bg-white text-text-primary border border-gray-300 hover:bg-gray-100 focus:ring-gray-400;
+  }
+  
+  .progress-bar {
+    @apply h-2 rounded-full bg-primary transition-all duration-300;
+  }
+  
+  .progress-bar-background {
+    @apply h-2 w-full rounded-full bg-gray-200;
+  }
+  
+  .quiz-container {
+    @apply max-w-xl mx-auto px-4 py-8 sm:px-6 lg:px-8;
+  }
+  
+  .quiz-card {
+    @apply bg-white rounded-2xl shadow-card p-6 sm:p-8;
+  }
+}
