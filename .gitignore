@@ -1,1 +1,14 @@
-"node_modules\n.env\n.DS_Store\ndist\n.cache" 
+# dependencias de Node
+node_modules/
+
+# resultados de build
+dist/
+build/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# archivos de entorno
+.env
