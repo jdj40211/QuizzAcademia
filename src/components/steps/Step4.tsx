@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
 import NavigationButtons from '../ui/NavigationButtons';
 import { useQuizContext } from '../../context/QuizContext';
+import { submitQuiz } from '../../api/submitQuiz';
 
 interface Step4Props {
   onPrev: () => void;
 }
 
 const Step4: React.FC<Step4Props> = ({ onPrev }) => {
-  const { email, setEmail, agreedToTerms, setAgreedToTerms } = useQuizContext();
+  const { email, setEmail, agreedToTerms, setAgreedToTerms, calculateResults } = useQuizContext();
   const [submitted, setSubmitted] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [termsError, setTermsError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     let valid = true;
     
     // Reset errors
@@ -37,12 +39,29 @@ const Step4: React.FC<Step4Props> = ({ onPrev }) => {
     }
     
     if (valid) {
-      // Here you would typically submit the data to your backend
-      console.log('Form submitted with email:', email);
-      setSubmitted(true);
+      setIsSubmitting(true);
       
-      // In a real app, you would send the data to your backend here
-      // For now, we'll just simulate a successful submission
+      try {
+        // Obtener los resultados del quiz
+        const results = calculateResults();
+        
+        // Llamar a submitQuiz para guardar en Supabase
+        console.log('Enviando datos a Supabase con email:', email);
+        const success = await submitQuiz(email, results);
+        
+        if (success) {
+          console.log('Datos guardados con éxito en Supabase');
+          setSubmitted(true);
+        } else {
+          console.error('Error al guardar datos en Supabase');
+          alert('Ha ocurrido un error al guardar tus resultados. Por favor intenta de nuevo.');
+        }
+      } catch (error) {
+        console.error('Error inesperado:', error);
+        alert('Ha ocurrido un error inesperado. Por favor intenta de nuevo.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -118,7 +137,8 @@ const Step4: React.FC<Step4Props> = ({ onPrev }) => {
       <NavigationButtons 
         onNext={handleSubmit} 
         onPrev={onPrev} 
-        nextText="Continuar" 
+        nextText={isSubmitting ? "Enviando..." : "Continuar"}
+        nextDisabled={isSubmitting}
       />
     </div>
   );

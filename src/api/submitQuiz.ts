@@ -1,4 +1,3 @@
-// src/api/index.ts
 import { createClient } from '@supabase/supabase-js';
 import { QuizResult } from '../types';
 
@@ -17,19 +16,32 @@ if (!supabaseUrl || !supabaseKey) {
 // Initialize Supabase client
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Función para enviar los datos del quiz a Supabase
-export const submitQuiz = async (email: string, results: QuizResult) => {
+/**
+ * Envía los resultados del quiz junto con el email del usuario a Supabase
+ * @param email - Correo electrónico del usuario
+ * @param results - Resultados del quiz
+ * @returns Promise<boolean> - true si se guarda correctamente, false si hay error
+ */
+export const submitQuiz = async (email: string, results: QuizResult): Promise<boolean> => {
   console.log('Enviando datos a Supabase:', { email, results });
   
   try {
+    // Validar el email
+    if (!email || !email.includes('@')) {
+      console.error('Email inválido:', email);
+      return false;
+    }
+    
     // Crear el objeto a insertar con tu estructura actual
     const quizSubmission = {
       email,
       results,
       submitted_at: new Date().toISOString(),
-      quiz_id: 'word-quiz', // Valor constante en lugar de obtenerlo de results
-      score: results.score, // Usamos el score que ya existe en tu interfaz
-      passed: results.accuracy >= 70 // Determinamos passed basado en la precisión
+      quiz_id: 'word-quiz',
+      score: results.score,
+      passed: results.accuracy >= 70,
+      device: navigator.userAgent,
+      language: navigator.language
     };
     
     console.log('Datos a insertar:', quizSubmission);
@@ -39,7 +51,6 @@ export const submitQuiz = async (email: string, results: QuizResult) => {
       .from('quiz_submissions')
       .insert([quizSubmission]);
     
-    // Verificar si hubo errores
     if (error) {
       console.error('Error de Supabase al insertar:', error);
       return false;
@@ -50,5 +61,28 @@ export const submitQuiz = async (email: string, results: QuizResult) => {
   } catch (error) {
     console.error('Error inesperado al enviar datos:', error);
     return false;
+  }
+};
+
+/**
+ * Consulta los resultados de un usuario específico
+ * @param email - Correo electrónico del usuario
+ */
+export const getUserResults = async (email: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_submissions')
+      .select('*')
+      .eq('email', email)
+      .order('submitted_at', { ascending: false });
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error al obtener resultados:', error);
+    return null;
   }
 };
