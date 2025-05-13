@@ -1,20 +1,52 @@
 import { createClient } from '@supabase/supabase-js';
 import { QuizResult } from '../types';
 
-// Verifica que las variables de entorno estén disponibles y muestra mensajes de depuración
+// Inicialización del cliente de Supabase con manejo de errores mejorado
+let supabase;
+
+// Obtén las variables de entorno
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('Supabase URL disponible:', !!supabaseUrl);
-console.log('Supabase Key disponible:', !!supabaseKey);
+// Establecer valores fijos (solo para desarrollo, no recomendado para producción)
+// Si las variables de entorno no funcionan, usa estos valores como respaldo
+const fallbackUrl = "https://zlynehixqgrglqhwycqy.supabase.co";
+const fallbackKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpseW5laGl4cWdyZ2xxaHd5Y3F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0Nzg0MzgsImV4cCI6MjA2MTA1NDQzOH0.pxYdk7V2otAiZDUX5URUFBdKU67E_xSvdlm4WI_AYxA";
 
-// Solo crea el cliente si ambas variables están definidas
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Error: Faltan variables de entorno de Supabase. Verifica tu archivo .env');
+// Usar valores de entorno si están disponibles, sino usar valores de respaldo
+const finalUrl = supabaseUrl || fallbackUrl;
+const finalKey = supabaseKey || fallbackKey;
+
+console.log('Supabase URL utilizada:', finalUrl.substring(0, 10) + '...');
+console.log('Supabase Key utilizada:', finalKey.substring(0, 10) + '...');
+
+try {
+  // Inicializar el cliente de Supabase
+  supabase = createClient(finalUrl, finalKey);
+  console.log('Cliente Supabase inicializado correctamente');
+} catch (error) {
+  console.error('Error al inicializar Supabase:', error);
+  // Crear un cliente ficticio en caso de error para que la aplicación no falle
+  // Este cliente ficticio imita la estructura del cliente real de Supabase
+  supabase = {
+    from: (table) => {
+      return {
+        insert: () => Promise.resolve({ data: null, error: { message: 'Error al inicializar Supabase' } }),
+        select: () => {
+          const builder = {
+            eq: () => {
+              return {
+                order: () => Promise.resolve({ data: [], error: { message: 'Error al inicializar Supabase' } })
+              };
+            },
+            order: () => Promise.resolve({ data: [], error: { message: 'Error al inicializar Supabase' } })
+          };
+          return builder;
+        }
+      };
+    }
+  };
 }
-
-// Initialize Supabase client
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * Envía los resultados del quiz junto con el email del usuario a Supabase
@@ -32,7 +64,7 @@ export const submitQuiz = async (email: string, results: QuizResult): Promise<bo
       return false;
     }
     
-    // Crear el objeto a insertar con tu estructura actual
+    // Crear el objeto a insertar SIN device y language
     const quizSubmission = {
       email,
       results,
@@ -40,8 +72,9 @@ export const submitQuiz = async (email: string, results: QuizResult): Promise<bo
       quiz_id: 'word-quiz',
       score: results.score,
       passed: results.accuracy >= 70,
-      device: navigator.userAgent,
-      language: navigator.language
+      // Removemos estas propiedades ya que no existen en la tabla
+      // device: navigator.userAgent,
+      // language: navigator.language
     };
     
     console.log('Datos a insertar:', quizSubmission);
